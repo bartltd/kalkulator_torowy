@@ -1,1 +1,116 @@
-<!DOCTYPE html><html><head><title>Kalkulator</title></head><body><h1>Kalkulator torowy</h1></body></html>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Kalkulator torowy</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+    input, select { width: 100%; padding: 10px; margin-top: 10px; }
+    button { padding: 10px; margin-top: 20px; width: 100%; }
+    #wynik { margin-top: 20px; font-weight: bold; }
+    .flex { display: flex; gap: 10px; }
+    .flex input { flex: 1; }
+    table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+    th, td { padding: 6px; border: 1px solid #ccc; text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>Kalkulator torowy</h2>
+
+  <label>Wybierz tor:</label>
+  <select id="wyborToru" onchange="ustawDlugoscToru()">
+    <option value="">-- Wybierz tor z listy --</option>
+    <option value="4083">Tor Poznań (4 083 m)</option>
+    <option value="3636">Silesia Ring (3 636 m)</option>
+    <option value="5922">Slovakiaring (5 922 m)</option>
+    <option value="5403">Brno Circuit (5 403 m)</option>
+    <option value="4115">Balaton Park (4 115 m)</option>
+    <option value="4500">Lausitzring (4 500 m)</option>
+    <option value="7004">Spa-Francorchamps (7 004 m)</option>
+    <option value="4318">Red Bull Ring (4 318 m)</option>
+    <option value="4212">Autodrom Most (4 212 m)</option>
+    <option value="manual">-- Wprowadź ręcznie --</option>
+  </select>
+
+  <div id="manualDlugosc" style="display:none;">
+    <label>Długość toru (w metrach):</label>
+    <input type="number" id="dlugosc" placeholder="Np. 4200">
+  </div>
+
+  <label>Średnia prędkość (km/h):</label>
+  <input type="number" id="predkosc" placeholder="Zostaw puste, jeśli podajesz czas">
+
+  <label>Czas okrążenia:</label>
+  <div class="flex">
+    <input type="number" id="minuty" placeholder="Minuty">
+    <input type="number" id="sekundy" placeholder="Sekundy (np. 32.56)">
+  </div>
+
+  <button onclick="oblicz()">Oblicz</button>
+
+  <div id="wynik"></div>
+  <div id="warianty"></div>
+
+  <script>
+    function ustawDlugoscToru() {
+      const wyborToru = document.getElementById("wyborToru").value;
+      const manualDlugosc = document.getElementById("manualDlugosc");
+      const dlugoscInput = document.getElementById("dlugosc");
+
+      if (wyborToru === "manual") {
+        manualDlugosc.style.display = "block";
+        dlugoscInput.value = "";
+      } else {
+        manualDlugosc.style.display = "none";
+        dlugoscInput.value = wyborToru;
+      }
+    }
+
+    function oblicz() {
+      const dlugosc = parseFloat(document.getElementById("dlugosc").value);
+      const predkosc = parseFloat(document.getElementById("predkosc").value);
+      const minuty = parseFloat(document.getElementById("minuty").value);
+      const sekundy = parseFloat(document.getElementById("sekundy").value);
+      const wynik = document.getElementById("wynik");
+      const warianty = document.getElementById("warianty");
+      warianty.innerHTML = "";
+
+      if (isNaN(dlugosc) || dlugosc <= 0) {
+        wynik.innerText = "Proszę podać poprawną długość toru.";
+        return;
+      }
+
+      const czasWprowadzony = (!isNaN(minuty) || !isNaN(sekundy));
+      const czasSekundy = ((isNaN(minuty) ? 0 : minuty) * 60) + (isNaN(sekundy) ? 0 : sekundy);
+
+      if (!isNaN(predkosc) && !czasWprowadzony) {
+        const predkosc_ms = predkosc / 3.6;
+        const czas = dlugosc / predkosc_ms;
+        const min = Math.floor(czas / 60);
+        const sek = (czas % 60).toFixed(2);
+        wynik.innerText = `Czas okrążenia: ${min} min ${sek} s`;
+
+      } else if (czasWprowadzony && isNaN(predkosc)) {
+        const predkosc_ms = dlugosc / czasSekundy;
+        const predkosc_kmh = predkosc_ms * 3.6;
+        wynik.innerText = `Średnia prędkość: ${predkosc_kmh.toFixed(2)} km/h`;
+
+        let html = "<h3>Jak zmienia się czas przy wyższej prędkości:</h3><table><tr><th>+ km/h</th><th>Nowa prędkość</th><th>Nowy czas</th></tr>";
+        for (let i = 1; i <= 5; i++) {
+          const nowaPredkoscKmh = predkosc_kmh + i;
+          const nowaPredkoscMs = nowaPredkoscKmh / 3.6;
+          const nowyCzas = dlugosc / nowaPredkoscMs;
+          const minNowy = Math.floor(nowyCzas / 60);
+          const sekNowy = (nowyCzas % 60).toFixed(2);
+          html += `<tr><td>+${i}</td><td>${nowaPredkoscKmh.toFixed(2)} km/h</td><td>${minNowy} min ${sekNowy} s</td></tr>`;
+        }
+        html += "</table>";
+        warianty.innerHTML = html;
+
+      } else {
+        wynik.innerText = "Proszę podać długość toru i albo średnią prędkość, albo czas okrążenia.";
+      }
+    }
+  </script>
+</body>
+</html>
